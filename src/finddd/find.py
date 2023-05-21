@@ -39,7 +39,7 @@ class Finder:
         mm.add(FilenameMather(pattern, ignore_case=self.ignore_case))
         mm.add(
             *(
-                NotMather(
+                NotMatcher(
                     FilenameMather(
                         i, mode=FilenameMatchMode.FMM_GLOB, ignore_case=self.ignore_case
                     )
@@ -49,14 +49,14 @@ class Finder:
         )
         mm.add(MaxResultMatcher())
 
-        files: list[Path] = []
+        files: tuple[Path, ...] = ()
         for cwd, ds, fs in os.walk(path, followlinks=self.follow):
 
             def g(l: list[str]):
                 l2 = (Path(cwd) / i for i in l)
-                return [i for i in l2 if mm.match(i)]
+                return (i for i in l2 if mm.match(i))
 
-            files = [*files, *g(ds), *g(fs)]
+            files = (*files, *g(ds), *g(fs))
 
         with ThreadPoolExecutor(self.threads) as pool:
             pool.map(cb, files)

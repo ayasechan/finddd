@@ -14,7 +14,7 @@ class Matcher(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class NotMather(Matcher):
+class NotMatcher(Matcher):
     def __init__(self, matcher: Matcher):
         self.matcher = matcher
 
@@ -22,7 +22,7 @@ class NotMather(Matcher):
         return not self.matcher.match(path)
 
 
-class NopMather(Matcher):
+class NopMatcher(Matcher):
     def match(self, path: Path) -> bool:
         return True
 
@@ -195,7 +195,7 @@ class DepthMatcher(Matcher):
         if self.min is not None:
             return depth > self.min
         if self.max is not None:
-            return depth > self.max
+            return depth < self.max
         return True
 
 

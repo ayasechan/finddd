@@ -4,13 +4,13 @@ from finddd.match import *
 
 
 def test_NopMather():
-    nm = NopMather()
+    nm = NopMatcher()
     assert nm.match(Path("foo"))
     assert nm.match(Path("bar"))
 
 
 def test_NotMather():
-    nm = NotMather(NopMather())
+    nm = NotMatcher(NopMatcher())
     assert not nm.match(Path("foo"))
     assert not nm.match(Path("bar"))
 
@@ -87,7 +87,7 @@ def test_MaxResultMatcher():
 
 
 def test_MultiMatcher():
-    mm = MultiMatcher(NopMather(), NopMather())
+    mm = MultiMatcher(NopMatcher(), NopMatcher())
     assert mm.match(Path("foo"))
-    mm = MultiMatcher(NopMather(), NotMather(NopMather()))
+    mm = MultiMatcher(NopMatcher(), NotMatcher(NopMatcher()))
     assert not mm.match(Path("foo"))
