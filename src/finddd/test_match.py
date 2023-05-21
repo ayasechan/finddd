@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from finddd.match import *
@@ -74,7 +75,25 @@ def test_DepthMatcher():
 
 
 def test_ChangeTimeMatcher():
-    ...
+    class fakePath:
+        def __init__(self, t: datetime) -> None:
+            self.st_mtime = t.timestamp()
+
+        def stat(self):
+            return self
+
+    today = datetime.today()
+    one_day = timedelta(days=1)
+    one_min = timedelta(minutes=1)
+    cm = ChangeTimeMatcher(newer=(today - one_day))
+    assert cm.match(fakePath(today))  # type: ignore
+    assert not cm.match(fakePath(today - 2 * one_day))  # type: ignore
+    cm = ChangeTimeMatcher(older=(today - one_day))
+    assert not cm.match(fakePath(today))  # type: ignore
+    assert cm.match(fakePath(today - 2 * one_day))  # type: ignore
+    cm = ChangeTimeMatcher(older=(today - one_day), newer=today, within=True)
+    assert cm.match(fakePath(today - one_min))  # type: ignore
+    assert not cm.match(fakePath(today - 2 * one_day))  # type: ignore
 
 
 def test_MaxResultMatcher():

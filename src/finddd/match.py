@@ -208,8 +208,8 @@ class ChangeTimeMatcher(Matcher):
         within: bool = False,
     ):
         if within:
-            assert newer is None
-            assert older is None
+            assert newer is not None
+            assert older is not None
             assert older < newer  # type: ignore
 
         self.newer = newer
@@ -217,7 +217,7 @@ class ChangeTimeMatcher(Matcher):
         self.within = within
 
     def match(self, path: Path) -> bool:
-        t = datetime.fromtimestamp(path.stat().st_mtime_ns)
+        t = datetime.fromtimestamp(path.stat().st_mtime)
         if self.within:
             return self.older < t < self.newer  # type: ignore
         if self.newer is not None:

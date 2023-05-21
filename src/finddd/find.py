@@ -27,7 +27,7 @@ class Finder:
         pattern: Union[str, re.Pattern[str]],
         path: Path,
         cb: Callable[[Path], None],
-    ):
+    ) -> None:
         mm = MultiMatcher()
         mm.add(HiddenMatcher(self.hidden))
         # mm.add(IgnoreFileMatcher())
