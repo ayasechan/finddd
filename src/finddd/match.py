@@ -40,7 +40,7 @@ class FilenameMather(Matcher):
         pattern: Union[str, re.Pattern[str]],
         *,
         ignore_case: bool = False,
-        mode: FilenameMatchMode = FilenameMatchMode.FMM_STR,
+        mode: FilenameMatchMode = FilenameMatchMode.FMM_RE,
     ):
         if (
             ignore_case
@@ -68,7 +68,11 @@ class FilenameMather(Matcher):
         if self.mode == FilenameMatchMode.FMM_GLOB:
             return fnmatch.fnmatch(path.name, self.pattern)  # type: ignore
         if self.mode == FilenameMatchMode.FMM_RE:
-            return self.pattern.match(path.name)  # type: ignore
+            try:
+                next(self.pattern.finditer(path.name)) # type: ignore
+            except StopIteration:
+                return False
+            return True
         assert isinstance(self.mode, FilenameMatchMode)
 
 

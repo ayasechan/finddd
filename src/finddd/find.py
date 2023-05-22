@@ -28,16 +28,15 @@ class Finder:
         path: Path,
         cb: Callable[[Path], None],
     ) -> None:
-        mm = MultiMatcher()
-        mm.add(HiddenMatcher(self.hidden))
-        # mm.add(IgnoreFileMatcher())
-        mm.add(SizeMatcher())
-        mm.add(FileTypeMatcher())
-        mm.add(SuffixMatcher())
-        mm.add(DepthMatcher(path))
-        mm.add(ChangeTimeMatcher())
-        mm.add(FilenameMather(pattern, ignore_case=self.ignore_case))
-        mm.add(
+        cmm = MultiMatcher()
+        nmm = MultiMatcher()
+
+        dmm = MultiMatcher()
+        fmm = MultiMatcher()
+
+
+        nmm.add(HiddenMatcher(self.hidden))
+        nmm.add(
             *(
                 NotMatcher(
                     FilenameMather(
@@ -47,16 +46,30 @@ class Finder:
                 for i in self.exclude
             )
         )
-        mm.add(MaxResultMatcher())
+        # nmm.add(IgnoreFileMatcher())
+        cmm.add(nmm)
+        cmm.add(FileTypeMatcher())
+        cmm.add(DepthMatcher(path))
+        cmm.add(ChangeTimeMatcher())
+        cmm.add(FilenameMather(pattern, ignore_case=self.ignore_case))
+
+        fmm.add(SizeMatcher())
+        fmm.add(SuffixMatcher())
+
+        # add MaxResultMatcher last
+        mrm = MaxResultMatcher()
+        fmm.add(cmm, mrm)
+        dmm.add(cmm, mrm)
 
         files: tuple[Path, ...] = ()
-        for cwd, ds, fs in os.walk(path, followlinks=self.follow):
+        for cwd, ds, nonds in os.walk(path, followlinks=self.follow):
 
-            def g(l: list[str]):
+            def g(l: list[str], m: Matcher):
                 l2 = (Path(cwd) / i for i in l)
-                return (i for i in l2 if mm.match(i))
+                return (i for i in l2 if m.match(i))
 
-            files = (*files, *g(ds), *g(fs))
+            files = (*files, *g(ds, dmm), *g(nonds, fmm))
+            ds[:] = [i.name for i in g(ds, nmm)]
 
         with ThreadPoolExecutor(self.threads) as pool:
-            pool.map(cb, files)
+            list(pool.map(cb, files))
