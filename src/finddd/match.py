@@ -150,7 +150,7 @@ class IgnoreFileMatcher(Matcher):
             for i in self.files:
                 if i.exists():
                     try:
-                        self.parser.parse_rule_file(i)
+                        self.parser.parse_rule_file(i, ".")
                     except UnicodeDecodeError:
                         pass
 
