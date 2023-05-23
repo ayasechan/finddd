@@ -37,24 +37,26 @@ class FilenameMatchMode(Enum):
     FMM_RE = 3
 
 
+FMM_EXACT = FilenameMatchMode.FMM_EXACT
+FMM_STR = FilenameMatchMode.FMM_STR
+FMM_GLOB = FilenameMatchMode.FMM_GLOB
+FMM_RE = FilenameMatchMode.FMM_RE
+
+
 class FilenameMather(Matcher):
     def __init__(
         self,
         pattern: Union[str, re.Pattern[str]],
         *,
         ignore_case: bool = False,
-        mode: FilenameMatchMode = FilenameMatchMode.FMM_RE,
+        mode: FilenameMatchMode = FMM_RE,
     ):
-        if (
-            ignore_case
-            and isinstance(pattern, str)
-            and mode != FilenameMatchMode.FMM_RE
-        ):
+        if ignore_case and isinstance(pattern, str) and mode != FMM_RE:
             pattern = pattern.lower()
 
         if isinstance(pattern, re.Pattern):
-            mode = FilenameMatchMode.FMM_RE
-        if mode == FilenameMatchMode.FMM_RE and isinstance(pattern, str):
+            mode = FMM_RE
+        if mode == FMM_RE and isinstance(pattern, str):
             pattern = re.compile(pattern)
         self.mode = mode
         self.pattern = pattern
@@ -64,13 +66,13 @@ class FilenameMather(Matcher):
         name = path.name
         if self.ignore_case:
             name = name.lower()
-        if self.mode == FilenameMatchMode.FMM_EXACT:
+        if self.mode == FMM_EXACT:
             return path.name == self.pattern
-        if self.mode == FilenameMatchMode.FMM_STR:
+        if self.mode == FMM_STR:
             return self.pattern in path.name  # type: ignore
-        if self.mode == FilenameMatchMode.FMM_GLOB:
+        if self.mode == FMM_GLOB:
             return fnmatch.fnmatch(path.name, self.pattern)  # type: ignore
-        if self.mode == FilenameMatchMode.FMM_RE:
+        if self.mode == FMM_RE:
             try:
                 next(self.pattern.finditer(path.name))  # type: ignore
             except StopIteration:
@@ -109,11 +111,11 @@ class SizeMatcher(Matcher):
 
 
 class HiddenMatcher(Matcher):
-    def __init__(self, enable: bool = False):
-        self.enable = enable
+    def __init__(self, hidden: bool = False):
+        self.hidden = hidden
 
     def match(self, path: Path) -> bool:
-        if self.enable:
+        if self.hidden:
             return True
         return not path.name.startswith(".")
 
@@ -166,6 +168,15 @@ class FileType(Enum):
     FT_EMPTY = "e"
     FT_SOCKET = "s"
     FT_PIPE = "p"
+
+
+FT_DIRECTORY = FileType.FT_DIRECTORY
+FT_FILE = FileType.FT_FILE
+FT_SYMLINK = FileType.FT_SYMLINK
+FT_EXECUTABLE = FileType.FT_EXECUTABLE
+FT_EMPTY = FileType.FT_EMPTY
+FT_SOCKET = FileType.FT_SOCKET
+FT_PIPE = FileType.FT_PIPE
 
 
 class FileTypeMatcher(Matcher):
@@ -295,10 +306,40 @@ class MultiMatcher(Matcher):
     def __init__(self, *matchers: Matcher):
         self.matchers = matchers
 
-    def add(self, *matchers: Matcher):
+    def add(self, *matchers: Matcher) -> None:
         self.matchers = (*self.matchers, *matchers)
 
     def match(self, path: Path) -> bool:
         if self.matchers:
             return all(i.match(path) for i in self.matchers)
         return True
+
+
+__all__ = [
+    "Matcher",
+    "NotMatcher",
+    "NopMatcher",
+    "FilenameMatchMode",
+    "FMM_EXACT",
+    "FMM_STR",
+    "FMM_GLOB",
+    "FMM_RE",
+    "FilenameMather",
+    "SizeMatcher",
+    "HiddenMatcher",
+    "IgnoreFileMatcher",
+    "FileType",
+    "FT_DIRECTORY",
+    "FT_FILE",
+    "FT_SYMLINK",
+    "FT_EXECUTABLE",
+    "FT_EMPTY",
+    "FT_SOCKET",
+    "FT_PIPE",
+    "FileTypeMatcher",
+    "SuffixMatcher",
+    "DepthMatcher",
+    "ChangeTimeMatcher",
+    "MaxResultMatcher",
+    "MultiMatcher",
+]

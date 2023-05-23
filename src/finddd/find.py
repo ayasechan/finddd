@@ -1,20 +1,21 @@
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 from finddd.match import *
 
-DEFAULT_EXECUTOR_NUM = cpu_count()
+_DEFAULT_EXECUTOR_NUM = cpu_count()
 
 
 class Finder:
     exclude: list[str]
 
     def __init__(self) -> None:
-        self.threads = DEFAULT_EXECUTOR_NUM
+        self.threads = _DEFAULT_EXECUTOR_NUM
         self.exclude = []
         self.glob = False
         self.hidden = False
@@ -54,9 +55,7 @@ class Finder:
         nmm.add(
             *(
                 NotMatcher(
-                    FilenameMather(
-                        i, mode=FilenameMatchMode.FMM_GLOB, ignore_case=self.ignore_case
-                    )
+                    FilenameMather(i, mode=FMM_GLOB, ignore_case=self.ignore_case)
                 )
                 for i in [*self.exclude, *exclude]
             )
@@ -102,3 +101,8 @@ class Finder:
 
 _finder = Finder()
 find = _finder.find
+
+__all__ = [
+    "find",
+    "Finder",
+]

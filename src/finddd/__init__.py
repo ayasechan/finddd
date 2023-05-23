@@ -1,2 +1,3 @@
 from finddd.const import *
-from finddd.find import find  # type: ignore
+from finddd.find import *
+from finddd.match import *
