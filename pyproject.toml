@@ -13,7 +13,9 @@ description = ""
 authors = [
     {name = "ayasechan", email = "529157057@qq.com"},
 ]
-dependencies = []
+dependencies = [
+    "igittigitt>=2.1.2",
+]
 requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}

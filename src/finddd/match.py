@@ -4,8 +4,11 @@ import re
 import stat
 from datetime import datetime
 from enum import Enum
+from os import getenv
 from pathlib import Path
 from typing import Callable, Optional, Union
+
+import igittigitt
 
 
 class Matcher(metaclass=abc.ABCMeta):
@@ -69,7 +72,7 @@ class FilenameMather(Matcher):
             return fnmatch.fnmatch(path.name, self.pattern)  # type: ignore
         if self.mode == FilenameMatchMode.FMM_RE:
             try:
-                next(self.pattern.finditer(path.name)) # type: ignore
+                next(self.pattern.finditer(path.name))  # type: ignore
             except StopIteration:
                 return False
             return True
@@ -106,21 +109,52 @@ class SizeMatcher(Matcher):
 
 
 class HiddenMatcher(Matcher):
-    def __init__(self, hidden: bool = False):
-        self.hidden = hidden
+    def __init__(self, enable: bool = False):
+        self.enable = enable
 
     def match(self, path: Path) -> bool:
-        if self.hidden:
+        if self.enable:
             return True
         return not path.name.startswith(".")
 
 
 class IgnoreFileMatcher(Matcher):
-    def __init__(self):
-        pass
+    def __init__(self, *files: Path, enable: bool = False, add_default: bool = True):
+        """init IgnoreFileMatcher
+
+        Args:
+            enable (bool, optional): if disabled, always return True. Defaults to False.
+            add_default (bool, optional): parse default git ignore files. Defaults to True.
+        """
+        self.files = files
+        self.enable = enable
+        self.add_default = add_default
+
+        if self.add_default:
+            xdg = getenv("XDG_CONFIG_HOME")
+            if not xdg:
+                xdg = f"{Path.home()}/.config"
+            self.files = (
+                *self.files,
+                *(
+                    Path.home() / ".gitignore",
+                    Path(xdg) / "git" / "ignore",
+                    Path.cwd() / ".gitignore",
+                ),
+            )
+
+        if self.enable:
+            self.parser = igittigitt.IgnoreParser()
+            for i in self.files:
+                if i.exists():
+                    try:
+                        self.parser.parse_rule_file(i)
+                    except UnicodeDecodeError:
+                        pass
 
     def match(self, path: Path) -> bool:
-        raise NotImplementedError
+        if self.enable:
+            return not self.parser.match(path)
         return True
 
 
@@ -138,18 +172,22 @@ class FileTypeMatcher(Matcher):
     def __init__(self, *types: FileType):
         self.types = types
 
+    @staticmethod
+    def is_excutable(mode: int) -> bool:
+        xmode = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        return mode & xmode  # type: ignore
+
     def match(self, path: Path) -> bool:
         if self.types:
             ps = path.stat()
             mode = ps.st_mode
 
-            def is_excutable():
-                raise NotImplementedError
-                return False
-
             def is_empty() -> bool:
                 if stat.S_ISDIR(mode):
-                    return len(list(path.iterdir())) == 0
+                    try:
+                        next(path.iterdir())
+                    except StopIteration:
+                        return True
                 if stat.S_ISREG(mode):
                     return ps.st_size == 0
                 return False
@@ -158,7 +196,7 @@ class FileTypeMatcher(Matcher):
                 "d": lambda: stat.S_ISDIR(mode),
                 "f": lambda: stat.S_ISREG(mode),
                 "l": lambda: stat.S_ISLNK(mode),
-                "x": is_excutable,
+                "x": lambda: self.is_excutable(mode),
                 "e": is_empty,
                 "s": lambda: stat.S_ISSOCK(mode),
                 "p": lambda: stat.S_ISFIFO(mode),
@@ -182,20 +220,29 @@ class DepthMatcher(Matcher):
         self,
         cur: Path,
         *,
+        exact: Optional[int] = None,
         max: Optional[int] = None,
         min: Optional[int] = None,
-        exact: Optional[int] = None,
+        within: bool = False,
     ):
         self.cur = cur
         self.max = max
         self.min = min
         self.exact = exact
+        self.within = within
+
+        if self.within:
+            assert self.max is not None
+            assert self.min is not None
+            assert self.max > self.min
 
     def match(self, path: Path) -> bool:
         depth = len(path.parts) - len(self.cur.parts)
         assert depth >= 0
         if self.exact is not None:
             return self.exact == depth
+        if self.within:
+            return self.min < depth < self.max  # type: ignore
         if self.min is not None:
             return depth > self.min
         if self.max is not None:
