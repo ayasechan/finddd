@@ -25,17 +25,17 @@ class Finder:
 
     def find(
         self,
-        pattern: Union[str, re.Pattern[str]],
-        path: Path,
-        cb: Callable[[Path], None],
+        pattern: Union[str, re.Pattern[str]] = ".",
+        path: Union[Path, str] = ".",
         *,
+        cb: Optional[Callable[[Path], None]] = None,
         size_min: Optional[int] = None,
         size_max: Optional[int] = None,
         size_within: bool = False,
         time_newer: Optional[datetime] = None,
         time_older: Optional[datetime] = None,
         time_within: bool = False,
-        filetypes: list[Union[FileType, str]] = [],
+        filetypes: list[FileType] = [],
         depth_exact: Optional[int] = None,
         depth_min: Optional[int] = None,
         depth_max: Optional[int] = None,
@@ -44,13 +44,18 @@ class Finder:
         exclude: list[str] = [],
         max_result: int = 0,
         threads: Optional[int] = None,
-    ) -> None:
+        pre_matcher: Matcher = NopMatcher(),
+        post_matcher: Matcher = NopMatcher(),
+    ) -> list[Path]:
+        if isinstance(path, str):
+            path = Path(path)
         cmm = MultiMatcher()
         nmm = MultiMatcher()
 
         dmm = MultiMatcher()
         fmm = MultiMatcher()
 
+        nmm.add(pre_matcher)
         nmm.add(HiddenMatcher(self.hidden))
         nmm.add(
             *(
@@ -83,8 +88,8 @@ class Finder:
 
         # add MaxResultMatcher last
         mrm = MaxResultMatcher(max_result)
-        fmm.add(cmm, mrm)
-        dmm.add(cmm, mrm)
+        fmm.add(cmm, mrm, post_matcher)
+        dmm.add(cmm, mrm, post_matcher)
 
         def g(cwd: str, l: list[str], m: Matcher):
             l2 = (Path(cwd) / i for i in l)
@@ -94,9 +99,10 @@ class Finder:
         for cwd, ds, nonds in os.walk(path, followlinks=self.follow):
             files = [*files, *g(cwd, ds, dmm), *g(cwd, nonds, fmm)]
             ds[:] = [i.name for i in g(cwd, ds, nmm)]
-
-        with ThreadPoolExecutor(threads if threads else self.threads) as pool:
-            list(pool.map(cb, files))
+        if cb is not None:
+            with ThreadPoolExecutor(threads if threads else self.threads) as pool:
+                list(pool.map(cb, files))
+        return files
 
 
 _finder = Finder()

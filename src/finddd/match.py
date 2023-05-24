@@ -203,16 +203,16 @@ class FileTypeMatcher(Matcher):
                     return ps.st_size == 0
                 return False
 
-            fns: dict[str, Callable[[], bool]] = {
-                "d": lambda: stat.S_ISDIR(mode),
-                "f": lambda: stat.S_ISREG(mode),
-                "l": lambda: stat.S_ISLNK(mode),
-                "x": lambda: self.is_excutable(mode),
-                "e": is_empty,
-                "s": lambda: stat.S_ISSOCK(mode),
-                "p": lambda: stat.S_ISFIFO(mode),
+            fns: dict[FileType, Callable[[], bool]] = {
+                FT_DIRECTORY: lambda: stat.S_ISDIR(mode),
+                FT_FILE: lambda: stat.S_ISREG(mode),
+                FT_SYMLINK: lambda: stat.S_ISLNK(mode),
+                FT_EXECUTABLE: lambda: self.is_excutable(mode),
+                FT_EMPTY: is_empty,
+                FT_SOCKET: lambda: stat.S_ISSOCK(mode),
+                FT_PIPE: lambda: stat.S_ISFIFO(mode),
             }
-            return any(fns.get(i, lambda _: False)() for i in self.types)  # type: ignore
+            return any(fns.get(i, lambda: False)() for i in self.types)  # type: ignore
         return True
 
 
