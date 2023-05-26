@@ -1,4 +1,6 @@
-from datetime import timedelta
+import re
+import stat
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from finddd.match import *
@@ -27,7 +29,41 @@ def test_HiddenMatcher():
 
 
 def test_FilenameMather():
-    ...
+    fm = FilenameMather('foo', mode=FMM_RE)
+    assert fm.match(Path('123foo123'))
+    assert not fm.match(Path('123Foo123'))
+
+    fm = FilenameMather(re.compile("foo"))
+    assert fm.mode == FMM_RE
+
+    fm = FilenameMather('foo', mode=FMM_EXACT)
+    assert fm.match(Path('foo'))
+    assert not fm.match(Path('foobar'))
+
+    fm = FilenameMather('foo', mode=FMM_STR)
+    assert fm.match(Path('123foo123'))
+    assert not fm.match(Path('123Foo123'))
+
+    fm = FilenameMather('foo*', mode=FMM_GLOB)
+    assert fm.match(Path('foo123'))
+    assert fm.match(Path('Foo123'))
+    assert not fm.match(Path('123foo'))
+
+    fm = FilenameMather('foo', mode=FMM_RE, ignore_case=True)
+    assert fm.match(Path('123foo123'))
+    assert fm.match(Path('123Foo123'))
+
+    fm = FilenameMather('foo', mode=FMM_EXACT, ignore_case=True)
+    assert fm.match(Path('foo'))
+    assert fm.match(Path('Foo'))
+
+    fm = FilenameMather('foo', mode=FMM_STR, ignore_case=True)
+    assert fm.match(Path('123foo123'))
+    assert fm.match(Path('123Foo123'))
+
+
+
+
 
 
 def test_SizeMatcher():
@@ -55,7 +91,52 @@ def test_IgnoreFileMatcher():
 
 
 def test_FileTypeMatcher():
-    ...
+    class fakePath:
+        def __init__(self, mode: int, size: int = 0):
+            self.st_mode = mode
+            self.st_size = size
+
+        def stat(self):
+            return self
+
+        def iterdir(self):
+            if self.st_size > 0:
+                yield "foo"
+
+    ftm = FileTypeMatcher(FT_FILE)
+    assert ftm.match(fakePath(stat.S_IFREG))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_DIRECTORY)
+    assert not ftm.match(fakePath(stat.S_IFREG))  # type: ignore
+    assert ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_FILE, FT_DIRECTORY)
+    assert ftm.match(fakePath(stat.S_IFREG))  # type: ignore
+    assert ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_SOCKET)
+    assert ftm.match(fakePath(stat.S_IFSOCK))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_SYMLINK)
+    assert ftm.match(fakePath(stat.S_IFLNK))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_PIPE)
+    assert ftm.match(fakePath(stat.S_IFIFO))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_EXECUTABLE)
+    assert ftm.match(fakePath(stat.S_IFREG | stat.S_IXUSR))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFREG))  # type: ignore
+
+    ftm = FileTypeMatcher(FT_EMPTY)
+    assert ftm.match(fakePath(stat.S_IFREG, 0))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFREG, 1))  # type: ignore
+    assert ftm.match(fakePath(stat.S_IFDIR))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFDIR, 1))  # type: ignore
+    assert not ftm.match(fakePath(stat.S_IFIFO))  # type: ignore
 
 
 def test_SuffixMatcher():
@@ -71,7 +152,26 @@ def test_SuffixMatcher():
 
 
 def test_DepthMatcher():
-    ...
+    dm = DepthMatcher(Path("."), exact=2)
+    assert not dm.match(Path("1"))
+    assert dm.match(Path("1/2"))
+    assert not dm.match(Path("1/2/3"))
+
+    dm = DepthMatcher(Path("."), min=2)
+    assert not dm.match(Path("1"))
+    assert dm.match(Path("1/2"))
+    assert dm.match(Path("1/2/3"))
+
+    dm = DepthMatcher(Path("."), max=2)
+    assert dm.match(Path("1"))
+    assert dm.match(Path("1/2"))
+    assert not dm.match(Path("1/2/3"))
+
+    dm = DepthMatcher(Path("."), min=2, max=3, within=True)
+    assert not dm.match(Path("1"))
+    assert dm.match(Path("1/2"))
+    assert dm.match(Path("1/2/3"))
+    assert not dm.match(Path("1/2/3/4"))
 
 
 def test_ChangeTimeMatcher():

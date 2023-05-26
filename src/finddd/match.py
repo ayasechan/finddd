@@ -51,6 +51,18 @@ class FilenameMather(Matcher):
         ignore_case: bool = False,
         mode: FilenameMatchMode = FMM_RE,
     ):
+        """init
+
+        Args:
+            pattern (Union[str, re.Pattern[str]]): match pattern
+
+            ignore_case (bool, optional): ignore case. Defaults to False.
+
+            glob mode will be always ignore case.
+            if pattern is a compiled regex object, this option will do nothing.
+
+            mode (FilenameMatchMode, optional): match mode. Defaults to FMM_RE.
+        """
         if ignore_case and isinstance(pattern, str) and mode != FMM_RE:
             pattern = pattern.lower()
 
@@ -67,14 +79,14 @@ class FilenameMather(Matcher):
         if self.ignore_case:
             name = name.lower()
         if self.mode == FMM_EXACT:
-            return path.name == self.pattern
+            return name == self.pattern
         if self.mode == FMM_STR:
-            return self.pattern in path.name  # type: ignore
+            return self.pattern in name  # type: ignore
         if self.mode == FMM_GLOB:
-            return fnmatch.fnmatch(path.name, self.pattern)  # type: ignore
+            return fnmatch.fnmatch(name, self.pattern)  # type: ignore
         if self.mode == FMM_RE:
             try:
-                next(self.pattern.finditer(path.name))  # type: ignore
+                next(self.pattern.finditer(name))  # type: ignore
             except StopIteration:
                 return False
             return True
@@ -253,11 +265,11 @@ class DepthMatcher(Matcher):
         if self.exact is not None:
             return self.exact == depth
         if self.within:
-            return self.min < depth < self.max  # type: ignore
+            return self.min <= depth <= self.max  # type: ignore
         if self.min is not None:
-            return depth > self.min
+            return depth >= self.min
         if self.max is not None:
-            return depth < self.max
+            return depth <= self.max
         return True
 
 

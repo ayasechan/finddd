@@ -1,14 +1,8 @@
-
-
 from finddd.find import *
-from subprocess import run
+from finddd.match import FT_DIRECTORY, FT_FILE
 
-def test_finder():
-    fder = Finder()
-    # fder.hidden = True
-    def cb(i: Path):
-        print(i)
-        # cp = run('bash -c "sleep 30s"', shell=True)
-        # print(cp.returncode)
 
-    fder.find('py', Path('.'), cb)
+def test_find():
+
+    files = find(r".", filetypes=[FT_DIRECTORY, FT_FILE],)
+    print(files)
