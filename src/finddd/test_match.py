@@ -29,41 +29,37 @@ def test_HiddenMatcher():
 
 
 def test_FilenameMather():
-    fm = FilenameMather('foo', mode=FMM_RE)
-    assert fm.match(Path('123foo123'))
-    assert not fm.match(Path('123Foo123'))
+    fm = FilenameMather("foo", mode=FMM_RE)
+    assert fm.match(Path("123foo123"))
+    assert not fm.match(Path("123Foo123"))
 
     fm = FilenameMather(re.compile("foo"))
     assert fm.mode == FMM_RE
 
-    fm = FilenameMather('foo', mode=FMM_EXACT)
-    assert fm.match(Path('foo'))
-    assert not fm.match(Path('foobar'))
+    fm = FilenameMather("foo", mode=FMM_EXACT)
+    assert fm.match(Path("foo"))
+    assert not fm.match(Path("foobar"))
 
-    fm = FilenameMather('foo', mode=FMM_STR)
-    assert fm.match(Path('123foo123'))
-    assert not fm.match(Path('123Foo123'))
+    fm = FilenameMather("foo", mode=FMM_STR)
+    assert fm.match(Path("123foo123"))
+    assert not fm.match(Path("123Foo123"))
 
-    fm = FilenameMather('foo*', mode=FMM_GLOB)
-    assert fm.match(Path('foo123'))
-    assert fm.match(Path('Foo123'))
-    assert not fm.match(Path('123foo'))
+    fm = FilenameMather("foo*", mode=FMM_GLOB)
+    assert fm.match(Path("foo123"))
+    assert fm.match(Path("Foo123"))
+    assert not fm.match(Path("123foo"))
 
-    fm = FilenameMather('foo', mode=FMM_RE, ignore_case=True)
-    assert fm.match(Path('123foo123'))
-    assert fm.match(Path('123Foo123'))
+    fm = FilenameMather("foo", mode=FMM_RE, ignore_case=True)
+    assert fm.match(Path("123foo123"))
+    assert fm.match(Path("123Foo123"))
 
-    fm = FilenameMather('foo', mode=FMM_EXACT, ignore_case=True)
-    assert fm.match(Path('foo'))
-    assert fm.match(Path('Foo'))
+    fm = FilenameMather("foo", mode=FMM_EXACT, ignore_case=True)
+    assert fm.match(Path("foo"))
+    assert fm.match(Path("Foo"))
 
-    fm = FilenameMather('foo', mode=FMM_STR, ignore_case=True)
-    assert fm.match(Path('123foo123'))
-    assert fm.match(Path('123Foo123'))
-
-
-
-
+    fm = FilenameMather("foo", mode=FMM_STR, ignore_case=True)
+    assert fm.match(Path("123foo123"))
+    assert fm.match(Path("123Foo123"))
 
 
 def test_SizeMatcher():
