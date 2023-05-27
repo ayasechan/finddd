@@ -82,9 +82,9 @@ class Finder:
             ChangeTimeMatcher(older=time_older, newer=time_newer, within=time_within)
         )
         cmm.add(FilenameMather(pattern, ignore_case=self.ignore_case))
+        cmm.add(SuffixMatcher(*suffixes))
 
         fmm.add(SizeMatcher(min=size_min, max=size_max, within=size_within))
-        fmm.add(SuffixMatcher(*suffixes))
 
         # add MaxResultMatcher last
         mrm = MaxResultMatcher(max_result)
