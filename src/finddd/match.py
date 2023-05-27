@@ -229,12 +229,18 @@ class FileTypeMatcher(Matcher):
 
 
 class SuffixMatcher(Matcher):
+    suffixes: list[str]
     def __init__(self, *suffixes: str):
-        self.suffixes = [(i if i.startswith(".") else f".{i}") for i in suffixes if i]
+        self.suffixes = []
+        for i in suffixes:
+            if i:
+                s = i.lower()
+                s = s if s.startswith('.') else f'.{s}'
+                self.suffixes = [*self.suffixes, s]
 
     def match(self, path: Path) -> bool:
         if self.suffixes:
-            return path.suffix in self.suffixes
+            return path.suffix.lower() in self.suffixes
         return True
 
 
