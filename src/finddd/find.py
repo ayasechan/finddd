@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 from finddd.match import *
 
@@ -35,13 +35,13 @@ class Finder:
         time_newer: Optional[datetime] = None,
         time_older: Optional[datetime] = None,
         time_within: bool = False,
-        filetypes: list[FileType] = [],
+        filetypes: Iterable[FileType] = [],
         depth_exact: Optional[int] = None,
         depth_min: Optional[int] = None,
         depth_max: Optional[int] = None,
         depth_within: bool = False,
-        suffixes: list[str] = [],
-        exclude: list[str] = [],
+        suffixes: Iterable[str] = [],
+        exclude: Iterable[str] = [],
         max_result: int = 0,
         threads: Optional[int] = None,
         pre_matcher: Matcher = NopMatcher(),
