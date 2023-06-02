@@ -58,12 +58,12 @@ class FilenameMather(Matcher):
 
             ignore_case (bool, optional): ignore case. Defaults to False.
 
-            glob mode will be always ignore case.
             if pattern is a compiled regex object, this option will do nothing.
 
             mode (FilenameMatchMode, optional): match mode. Defaults to FMM_RE.
         """
         if ignore_case and isinstance(pattern, str) and mode != FMM_RE:
+            # TODO keep original pattern
             pattern = pattern.lower()
 
         if isinstance(pattern, re.Pattern):
@@ -83,7 +83,11 @@ class FilenameMather(Matcher):
         if self.mode == FMM_STR:
             return self.pattern in name  # type: ignore
         if self.mode == FMM_GLOB:
-            return fnmatch.fnmatch(name, self.pattern)  # type: ignore
+            return (
+                fnmatch.fnmatch(name, self.pattern) # type: ignore
+                if self.ignore_case
+                else fnmatch.fnmatchcase(name, self.pattern) # type: ignore
+            )
         if self.mode == FMM_RE:
             try:
                 next(self.pattern.finditer(name))  # type: ignore
@@ -229,14 +233,15 @@ class FileTypeMatcher(Matcher):
 
 
 class SuffixMatcher(Matcher):
-    suffixes: list[str]
+    suffixes: set[str]
+
     def __init__(self, *suffixes: str):
-        self.suffixes = []
+        self.suffixes = set()
         for i in suffixes:
             if i:
                 s = i.lower()
-                s = s if s.startswith('.') else f'.{s}'
-                self.suffixes = [*self.suffixes, s]
+                s = s if s.startswith(".") else f".{s}"
+                self.suffixes.add(s)
 
     def match(self, path: Path) -> bool:
         if self.suffixes:
