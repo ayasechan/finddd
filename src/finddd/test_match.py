@@ -46,7 +46,7 @@ def test_FilenameMather():
 
     fm = FilenameMather("foo*", mode=FMM_GLOB)
     assert fm.match(Path("foo123"))
-    assert fm.match(Path("Foo123"))
+    assert not fm.match(Path("Foo123"))
     assert not fm.match(Path("123foo"))
 
     fm = FilenameMather("foo", mode=FMM_RE, ignore_case=True)
