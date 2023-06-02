@@ -84,9 +84,9 @@ class FilenameMather(Matcher):
             return self.pattern in name  # type: ignore
         if self.mode == FMM_GLOB:
             return (
-                fnmatch.fnmatch(name, self.pattern) # type: ignore
+                fnmatch.fnmatch(name, self.pattern)  # type: ignore
                 if self.ignore_case
-                else fnmatch.fnmatchcase(name, self.pattern) # type: ignore
+                else fnmatch.fnmatchcase(name, self.pattern)  # type: ignore
             )
         if self.mode == FMM_RE:
             try:
@@ -244,9 +244,7 @@ class SuffixMatcher(Matcher):
                 self.suffixes.add(s)
 
     def match(self, path: Path) -> bool:
-        if self.suffixes:
-            return path.suffix.lower() in self.suffixes
-        return True
+        return any(path.name.lower().endswith(i) for i in self.suffixes)
 
 
 class DepthMatcher(Matcher):
