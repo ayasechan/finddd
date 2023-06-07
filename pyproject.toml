@@ -24,3 +24,6 @@ license = {text = "MIT"}
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.ruff]
+ignore = ["F403", "F405", "E741",]
