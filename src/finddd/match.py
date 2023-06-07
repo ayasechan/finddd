@@ -142,7 +142,7 @@ class IgnoreFileMatcher(Matcher):
 
         Args:
             enable (bool, optional): if disabled, always return True. Defaults to False.
-            add_default (bool, optional): parse default git ignore files. Defaults to True.
+            add_default (bool, optional): parse default git ignore files.
         """
         self.files = files
         self.enable = enable
