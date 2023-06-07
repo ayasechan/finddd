@@ -11,8 +11,4 @@ tasks:
       - echo "{{.GREETING}}"
     silent: true
 
-  fmt: |-
-    pdm run isort src
-    pdm run black src
-
   test: pdm run pytest
