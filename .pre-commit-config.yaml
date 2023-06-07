@@ -1,0 +1,28 @@
+
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.263'
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --show-fixes]
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+      - id: codespell  # See setup.cfg for args
+
+  - repo: local
+    hooks:
+    -   id: test
+        name: test
+        entry: pytest -v -s tests
+        stages:
+            - "push"
+        language: system
+        pass_filenames: false
+        always_run: true
